@@ -81,8 +81,15 @@ const List = () =>{
 
 function reducer(state, action){
   switch(action.type) {
+    case 'delete-item':
+      const listUpdate = state.filter((item) =>{
+        return item.id !== action.id;
+      });
+      return {...state, list: listUpdate}
     case 'update-list':
       return {...state, list: action.list}
+    case 'edit-item':
+      return {...state, list: action.item}
     case 'add-item':
       const newList = state.list;
       newList.push(action.item);
