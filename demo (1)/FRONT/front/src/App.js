@@ -2,14 +2,15 @@ import React, { useContext, useReducer, useEffect, useRef, useState, createConte
 
 const HOST_API ="http://localhost:8080/api";
 const initialState = {
-  list:[]
+  list:[],
+  item: {}
 };
 const Store = createContext(initialState)
 
 const Form = () =>{
-  const { dispatch } = useContext(Store);
   const formRef = useRef(null);
-  const [state, setState] = useState({});
+  const {dispatch, state: {item}} = useContext(Store);
+  const [state, setState] = useState(item);
 
 
   const onAdd = (event) =>{
@@ -36,12 +37,37 @@ const Form = () =>{
     });
   }
 
+  const onEdit = (event) =>{
+    event.preventDefault();
+
+    const request ={
+      name: state.name,
+      id: item.id,
+      isComplete: item.isComplete
+    };
+  
+    fetch(HOST_API+"/todo", {
+      method: "PUT",
+      body: JSON.stringify(request),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+    .then(response => response.json())
+    .then((todo)=>{
+      dispatch({ type: "update-item", item: todo});
+      setState({name: ""});
+      formRef.current.reset();
+    });
+  }
   
   return <form ref={formRef}>
-    <input type="text" name="name" onChange={(event)=>{
+    <input type="text" name="name" defaultValue={item.name} onChange={(event)=>{
       setState({...state, name: event.target.value})
     }}  ></input>
-    <button onClick={onAdd}>Agregar</button>
+    {item.id && <button onClick={onEdit}>Actualizar</button>}
+    {!item.id && <button onClick={onAdd}>Agregar</button> }
+        
   </form>
 }
 
@@ -84,7 +110,7 @@ const List = () =>{
         return <tr key={todo.id}>
           <td>{todo.id}</td>
           <td>{todo.name}</td>
-          <td>{todo.isComplete}</td>
+          <td>{todo.isComplete === true ? "SI" : "NO"}</td>
           <td><button onClick={() => onDelete(todo.id)}>Eliminar</button></td>
           <td><button onClick={() => onEdit(todo)}>Editar</button></td>
         </tr>
@@ -96,15 +122,24 @@ const List = () =>{
 
 function reducer(state, action){
   switch(action.type) {
+    case 'update-item':
+      const listUpdateEdit = state.list.map((item) =>{
+        if (item.id === action.item.id){
+          return action.item;
+        }
+        return item;
+      });
+      return {...state, list: listUpdateEdit, item: {}}
+
     case 'delete-item':
-      const listUpdate = state.filter((item) =>{
+      const listUpdate = state.list.filter((item) =>{
         return item.id !== action.id;
       });
       return {...state, list: listUpdate}
     case 'update-list':
       return {...state, list: action.list}
     case 'edit-item':
-      return {...state, list: action.item}
+      return {...state, item: action.item}
     case 'add-item':
       const newList = state.list;
       newList.push(action.item);
