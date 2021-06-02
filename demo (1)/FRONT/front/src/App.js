@@ -57,6 +57,19 @@ const List = () =>{
     })
   }, [state.list.lenght, dispatch]);
 
+  const onDelete = (id) =>{
+    fetch(HOST_API + "/" +id+ "/todo",{
+      method: "DELETE"
+    })
+    .then((list) => {
+      dispatch({ type: "delete-item", id})
+    })
+  };
+
+  const onEdit = (todo) => {
+    dispatch({ type: "edit-item", item: todo})
+  };
+
   return <div>
   <table>
     <thead>
@@ -72,6 +85,8 @@ const List = () =>{
           <td>{todo.id}</td>
           <td>{todo.name}</td>
           <td>{todo.isComplete}</td>
+          <td><button onClick={() => onDelete(todo.id)}>Eliminar</button></td>
+          <td><button onClick={() => onEdit(todo)}>Editar</button></td>
         </tr>
       })}
     </tbody>
